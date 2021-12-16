@@ -17,10 +17,6 @@ import { localize } from './localize/localize';
 
 const room = "M11.4,1.4h27.2v43.1H11.4V1.4z";
 const door = "M11.4 1.4v43.1h27.2V1.4H11.4zm23 23.4c0 1.1-.9 1.9-1.9 1.9h0c-1.1 0-1.9-.9-1.9-1.9V21c0-1.1.9-1.9 1.9-1.9h0c1.1 0 1.9.9 1.9 1.9v3.8z";
-const garageClosed = "M19,20H17V11H7V20H5V9L12,5L19,9V20M8,12H16V14H8V12M8,15H16V17H8V15M16,18V20H8V18H16Z";
-const garageOpen = "M19,20H17V11H7V20H5V9L12,5L19,9V20M8,12H16V14H8V12Z";
-const sidegateClosed = "M15.867 25.984v6.774h18.07V19.21h-18.07Zm16.848-4.925v.617H17.09V20.44h15.625Zm0 2.464v.614H17.09v-1.23h15.625Zm0 2.461v.618H17.09v-1.23h15.625Zm0 2.465v.613H17.09v-1.23h15.625Zm0 2.461v.617H17.09v-1.23h15.625Zm0 0";
-const sidegateOpen = "M7.324 12.563v4.68H0V33.25h50.047V17.242H42.48v-9.36h-6.105v24.876H13.43V7.883H7.324Zm0 0";
 
 console.info(
   `%c  RACELAND-porta-card \n%c  ${localize('common.version')} ${CARD_VERSION}    `,
@@ -142,11 +138,7 @@ export class BoilerplateCard extends LitElement {
           ? html`
             <svg class=${classMap({
                 "svgicon-door":
-                  (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
-                "svgicon-garagem":
-                  (JSON.stringify(this.config.icon) == JSON.stringify([garageOpen, garageClosed])),
-                "svgicon-sidegate":
-                  (JSON.stringify(this.config.icon) == JSON.stringify([sidegateOpen, sidegateClosed])),
+                  (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),                
                 }
                 )
             }
@@ -156,15 +148,7 @@ export class BoilerplateCard extends LitElement {
                 "state-on-porta-icon":
                   ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (JSON.stringify(this.config.icon) ==JSON.stringify([room, door])),
                 "state-off-porta-icon":
-                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
-                "state-on-garagem-icon":
-                  ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (JSON.stringify(this.config.icon)==JSON.stringify([garageOpen, garageClosed])),
-                "state-off-garagem-icon":
-                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([garageOpen, garageClosed])),
-                "state-on-sidegate-icon":
-                  ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (JSON.stringify(this.config.icon)==JSON.stringify([sidegateOpen, sidegateClosed])),
-                "state-off-sidegate-icon":
-                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([sidegateOpen, sidegateClosed])),
+                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),            
                 "state-unavailable":
                   ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
               }
@@ -326,19 +310,7 @@ private computeActiveState = (stateObj: HassEntity): string => {
         padding-bottom: 20px;
         max-width: 170px;
       }
-
-      .svgicon-garagem {
-        padding-bottom: 20px;
-        max-width: 170px;
-        transform: translate(62%, 55%) scale(2.5);
-      }
-
-      .svgicon-sidegate {
-        padding-left: 10px;
-        padding-bottom: 20px;
-        transform: scale(1.3);
-      }
-
+      
       .state {
         animation: state 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
       }
@@ -356,39 +328,10 @@ private computeActiveState = (stateObj: HassEntity): string => {
         transition: all 0.5s ease;
         fill: #a2743f;
       }
-
-      .state-on-garagem-icon {
-        transform: scale(0);
-        fill: #ffffff;
-      }
-
-      .state-off-garagem-icon {
-        fill: #a9b1bc;
-      }
-
-      .state-on-sidegate-icon {
-        fill: #a9b1bc;
-        transform: translate(15px);
-        transition: 2s ease;
-      }
-
-      .state-off-sidegate-icon {
-        fill: #a9b1bc;
-        transition: all 2s ease;
-        direction: 0px;
-      }
-
+     
       .porta-icon.state-unavailable {
         color: var(--state-icon-unavailable-color, #bdbdbd);
-      }
-
-      .garagem-icon.state-unavailable {
-        color: var(--state-icon-unavailable-color, #bdbdbd);
-      }
-
-      .sidegate-icon.state-unavailable {
-        color: var(--state-icon-unavailable-color, #bdbdbd);
-      }
+      }     
 
       .opacity {
         animation: opacity 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
