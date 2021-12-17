@@ -138,7 +138,7 @@ export class BoilerplateCard extends LitElement {
           ? html`
             <svg class=${classMap({
                 "svgicon-door":
-                  (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),                
+                  (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
                 }
                 )
             }
@@ -148,7 +148,7 @@ export class BoilerplateCard extends LitElement {
                 "state-on-porta-icon":
                   ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (JSON.stringify(this.config.icon) ==JSON.stringify([room, door])),
                 "state-off-porta-icon":
-                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),            
+                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
                 "state-unavailable":
                   ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
               }
@@ -310,7 +310,7 @@ private computeActiveState = (stateObj: HassEntity): string => {
         padding-bottom: 20px;
         max-width: 170px;
       }
-      
+
       .state {
         animation: state 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
       }
@@ -328,10 +328,10 @@ private computeActiveState = (stateObj: HassEntity): string => {
         transition: all 0.5s ease;
         fill: #a2743f;
       }
-     
+
       .porta-icon.state-unavailable {
         color: var(--state-icon-unavailable-color, #bdbdbd);
-      }     
+      }
 
       .opacity {
         animation: opacity 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
