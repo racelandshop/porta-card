@@ -320,7 +320,6 @@ private computeActiveState = (stateObj: HassEntity): string => {
         /* transition-property: all 0.5s ease-out; */
         transition: all 0.5s ease;
         fill: #b68349;
-
       }
 
       .state-off-porta-icon {
