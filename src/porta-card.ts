@@ -12,11 +12,9 @@ import { HomeAssistant, hasConfigOrEntityChanged, hasAction, ActionHandlerEvent,
 import './editor';
 import type { BoilerplateCardConfig } from './types';
 import { actionHandler } from './action-handler-directive';
-import { CARD_VERSION } from './const';
+import { CARD_VERSION, doorClosed, doorOpen, garageOpen, garageClosed, sidegateClosed, sidegateOpen } from './const';
 import { localize } from './localize/localize';
 
-const room = "M11.4,1.4h27.2v43.1H11.4V1.4z";
-const door = "M11.4 1.4v43.1h27.2V1.4H11.4zm23 23.4c0 1.1-.9 1.9-1.9 1.9h0c-1.1 0-1.9-.9-1.9-1.9V21c0-1.1.9-1.9 1.9-1.9h0c1.1 0 1.9.9 1.9 1.9v3.8z";
 
 console.info(
   `%c  RACELAND-porta-card \n%c  ${localize('common.version')} ${CARD_VERSION}    `,
@@ -52,8 +50,17 @@ export class BoilerplateCard extends LitElement {
       entitiesFallback,
       includeDomains
     );
-    return { type: "custom:porta-card", entity: foundEntities[0] || "", "show_name": true, "show_state": true, "name": "Raceland", "show_preview": true, "icon": [room, door]};
+    return {
+      type: "custom:porta-card",
+      entity: foundEntities[0] || "",
+      "show_name": true,
+      "show_state": true,
+      "name": "Raceland",
+      "show_preview": true,
+      "icon": doorClosed + ":" + doorOpen,
+    };
   }
+
 
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private config!: BoilerplateCardConfig;
@@ -66,9 +73,8 @@ export class BoilerplateCard extends LitElement {
     }
 
     this.config = {
-      show_icon: true,
-      icon: 'mdi:Door',
       ...config,
+      show_icon: true,
       tap_action: {
         action: "toggle",
       },
@@ -97,15 +103,6 @@ export class BoilerplateCard extends LitElement {
     return hasConfigOrEntityChanged(this, changedProps, false);
   }
 
-  protected renderSwitch(param): string{
-    switch(param) {
-      case 'foo':
-        return 'bar';
-      default:
-        return 'foo';
-    }
-  }
-
   protected render(): TemplateResult | void {
     if (this.config.show_warning) {
       return this._showWarning(localize('common.show_warning'));
@@ -118,56 +115,63 @@ export class BoilerplateCard extends LitElement {
       : undefined;
 
   return html`
-      <ha-card
-        class="hassbut ${classMap({
-          "state-on": ifDefined(
+    <ha-card
+      class="hassbut ${classMap({
+        "state-on": ifDefined(
           stateObj ? this.computeActiveState(stateObj) : undefined) === "on",
         "state-off": ifDefined(
           stateObj ? this.computeActiveState(stateObj) : undefined) === "off",
-      })}"
-        @action=${this._handleAction}
-        @focus="${this.handleRippleFocus}"
-        .actionHandler=${actionHandler({
-          hasHold: hasAction(this.config.hold_action),
-          hasDoubleClick: hasAction(this.config.double_tap_action),
-        })}
-        tabindex="0"
-        .label=${`porta: ${this.config.entity || 'No Entity Defined'}`}
-      >
-      ${this.config.show_icon
+        })}"
+      @action=${this._handleAction}
+      @focus="${this.handleRippleFocus}"
+      .actionHandler=${actionHandler({
+      hasHold: hasAction(this.config.hold_action),
+      hasDoubleClick: hasAction(this.config.double_tap_action),
+      })}
+      tabindex="0"
+      .label=${`porta: ${this.config.entity || 'No Entity Defined'}`}
+    >
+      ${this.config.show_icon && this.config.icon
           ? html`
             <svg class=${classMap({
-                "svgicon-door":
-                  (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
-                }
-                )
-            }
-              viewBox="0 0 50 50" height="75%" width="65%" >
-              <path fill="#a9b1bc" d=${this.config.icon[0]} />
-              <path class=${classMap({
-                "state-on-porta-icon":
-                  ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (JSON.stringify(this.config.icon) ==JSON.stringify([room, door])),
-                "state-off-porta-icon":
-                  ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (JSON.stringify(this.config.icon) == JSON.stringify([room, door])),
-                "state-unavailable":
-                  ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
-              }
-                  )
-              }
-              d=${this.config.icon[1]} />
-            </svg>
-            <div class="divibut"></div>
-            `
-    : ""}
-
+              "svgicon-door":
+                this.config.icon == doorClosed + ":" + doorOpen,
+              "svgicon-garage":
+                this.config.icon == garageClosed + ":" + garageOpen,
+              "svgicon-sidegate":
+                this.config.icon == sidegateClosed + ":" + sidegateOpen,
+            })}
+              viewBox="0 0 50 50" height="100%" width="100%" >
+                <path fill="#a9b1bc" d=${this.config.icon.split(":")[0]} />
+                <path class=${classMap({
+                  "state-on-porta-icon":
+                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon == doorClosed + ":" + doorOpen),
+                  "state-off-porta-icon":
+                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == doorClosed + ":" + doorOpen),
+                  "state-on-garage-icon":
+                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon ==  garageClosed + ":" + garageOpen),
+                  "state-off-garage-icon":
+                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == garageClosed + ":" + garageOpen),
+                  "state-on-sidegate-icon":
+                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon == sidegateClosed + ":" + sidegateOpen),
+                  "state-off-sidegate-icon":
+                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == sidegateClosed + ":" + sidegateOpen),
+                  "state-unavailable":
+                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
+                })}
+                d=${this.config.icon.split(":")[1]} />
+              </svg>
+          <div class="divibut"></div>
+          `
+        : ""}
     ${this.config.show_name
-    ? html`
-      <div tabindex = "-1" class="name-div">
-      ${this.config.name}
-        </div>
-        <div></div>
-      `
-    : ""}
+      ? html`
+        <div tabindex = "-1" class="name-div">
+        ${this.config.name}
+          </div>
+          <div></div>
+        `
+      : ""}
 
     ${this.config.show_state
     ? html`
@@ -248,7 +252,6 @@ private computeActiveState = (stateObj: HassEntity): string => {
         border-radius: 25px;
         overflow: hidden;
       }
-
       ha-icon {
         width: 70%;
         height: 80%;
@@ -257,89 +260,101 @@ private computeActiveState = (stateObj: HassEntity): string => {
         color: var(--paper-item-icon-color, #fdd835);
         --mdc-icon-size: 100%;
       }
-
       ha-icon + span {
         text-align: left;
       }
-
       span {
         margin: 5% 50% 1% 0%;
         padding: 0% 100% 1% 0%;
       }
-
       .divibut{
         padding-bottom: 0%;
         margin-bottom: 0%;
       }
-
       ha-icon,
       span {
         outline: none;
       }
-
       .state {
         margin: 0% 50% 5% 0%;
         padding: 0% 100% 5% 0%;
         text-align: left;
       }
-
       .hassbut.state-off {
         text-align: left;
       }
-
       .hassbut.state-on {
         text-align: left;
       }
-
       .hassbut {
         display: grid;
         grid-template-columns: 50% 50%;
       }
-
       .state-div {
         padding: 0% 100% 10% 0%;
         align-items: left;
       }
-
       .name-div {
         padding: 0% 100% 1% 0%;
         align-items: left;
       }
-
       .svgicon-door {
         padding-bottom: 20px;
         max-width: 170px;
       }
-
+      .svgicon-garage {
+        padding-bottom: 20px;
+        max-width: 170px;
+        transform: translate(62%, 55%) scale(2.5);
+      }
+      .svgicon-sidegate {
+        padding-left: 10px;
+        padding-bottom: 20px;
+        transform: scale(1.3);
+      }
       .state {
         animation: state 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
       }
-
       .state-on-porta-icon {
         transform: skewY(10deg) translate(4.5%, -3.9%) scaleX(0.8);
-        /* transition-property: all 0.5s ease-out; */
-        transition: all 0.5s ease;
+        transition: all 0.5s ease-out;
         fill: #b68349;
       }
-
       .state-off-porta-icon {
-        animation-direction: reverse;
-        transition: all 0.5s ease;
+        transition-timing-function: all 0.5s ease-out;
         fill: #a2743f;
       }
-
+      .state-on-garage-icon {
+        transform: scale(0);
+        fill: #ffffff;
+      }
+      .state-off-garage-icon {
+        fill: #a9b1bc;
+      }
+      .state-on-sidegate-icon {
+        fill: #a9b1bc;
+        transform: translate(15px);
+      }
+      .state-off-sidegate-icon {
+        fill: #a9b1bc;
+        transform: translate(0px);
+        transition-timing-function: all 2s ease-out;
+      }
       .porta-icon.state-unavailable {
         color: var(--state-icon-unavailable-color, #bdbdbd);
       }
-
+      .garagem-icon.state-unavailable {
+        color: var(--state-icon-unavailable-color, #bdbdbd);
+      }
+      .sidegate-icon.state-unavailable {
+        color: var(--state-icon-unavailable-color, #bdbdbd);
+      }
       .opacity {
         animation: opacity 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
       }
-
       .reverse {
         animation-direction: reverse;
       }
-
       @keyframes state {
         0% {
           transform: none;
@@ -350,7 +365,6 @@ private computeActiveState = (stateObj: HassEntity): string => {
           fill: #b68349;
         }
       }
-
       @keyframes opacity {
         0% {
           opacity: 0;

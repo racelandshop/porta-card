@@ -8,5 +8,19 @@
   "states":{
       "on": "Ligado",
       "off": "Desligado"
+  },
+  "editor": {
+    "config": {
+      "entity": "Entity",
+      "name": "Name",
+      "theme": "Theme",
+      "show_name": "Show name?",
+      "show_state": "Show state?"
+    },
+    "custom_icons": {
+      "door": "Door",
+      "garage": "Garage",
+      "gate": "Gate"
+    }
   }
 }

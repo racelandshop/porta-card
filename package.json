@@ -19,7 +19,15 @@
     "home-assistant-js-websocket": "^4.5.0",
     "lit": "^2.0.0-rc.2",
     "material": "^0.4.3",
-    "@material/mwc-ripple": "^0.19.1"
+    "@material/mwc-formfield": "^0.25.3",
+    "@material/mwc-icon": "^0.25.3",
+    "@material/mwc-icon-button": "^0.25.3",
+    "@material/mwc-list": "^0.25.3",
+    "@material/mwc-menu": "^0.25.3",
+    "@material/mwc-notched-outline": "^0.25.3",
+    "@material/mwc-ripple": "^0.25.3",
+    "@material/mwc-select": "^0.25.3",
+    "@material/mwc-switch": "^0.25.3"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
