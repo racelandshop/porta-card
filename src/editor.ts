@@ -6,9 +6,9 @@ import { customElement, property, state } from 'lit/decorators';
 import { BoilerplateCardConfig, EditorTarget } from './types';
 import { PortaCardEditorSchema } from './schema';
 import { localize } from "./localize/localize";
-import { doorClosed, doorOpen, garageOpen, garageClosed, sidegateClosed, sidegateOpen } from "./const";
+import { doorClosed, doorOpen } from "./const";
 
-import './icon-select-door'
+// import './icon-select-door'
 
 // import { assert } from 'superstruct';
 
@@ -44,13 +44,13 @@ export class BoilerplateCardEditor extends LitElement implements LovelaceCardEdi
     return this._config?.name || '';
   }
 
-  get _show_name(): boolean {
-    return this._config?.show_name ?? true;
-  }
+  // get _show_name(): boolean {
+  //   return this._config?.show_name ?? true;
+  // }
 
-  get _show_state(): boolean {
-    return this._config?.show_state ?? true;
-  }
+  // get _show_state(): boolean {
+  //   return this._config?.show_state ?? true;
+  // }
 
   get _entity(): string {
     return this._config?.entity || '';
@@ -64,17 +64,17 @@ export class BoilerplateCardEditor extends LitElement implements LovelaceCardEdi
     return this._config?.show_error || false;
   }
 
-  get _tap_action(): ActionConfig {
-    return this._config?.tap_action || { action: 'more-info' };
-  }
+  // get _tap_action(): ActionConfig {
+  //   return this._config?.tap_action || { action: 'more-info' };
+  // }
 
-  get _hold_action(): ActionConfig {
-    return this._config?.hold_action || { action: 'none' };
-  }
+  // get _hold_action(): ActionConfig {
+  //   return this._config?.hold_action || { action: 'none' };
+  // }
 
-  get _double_tap_action(): ActionConfig {
-    return this._config?.double_tap_action || { action: 'none' };
-  }
+  // get _double_tap_action(): ActionConfig {
+  //   return this._config?.double_tap_action || { action: 'none' };
+  // }
 
   protected render(): TemplateResult | void {
     if (!this.hass || !this._helpers) {
@@ -90,39 +90,6 @@ export class BoilerplateCardEditor extends LitElement implements LovelaceCardEdi
         .data = ${this._config}
         @value-changed=${this._valueChanged}
       ></ha-form>
-
-      <icon-select-door
-        .label=${"Icon"}
-        .configValue=${"icon"}
-        .value=${this._config?.icon || ""}
-        @selected=${this._changed_icon}
-        @closed=${(e) => e.stopPropagation()}
-        fixedMenuPosition
-        naturalMenuWidth>
-
-        <mwc-list-item> </mwc-list-item>
-        <mwc-list-item .value=${doorClosed + ":" + doorOpen}>
-          <svg viewBox="5 -8 50 50" height="20" width="24">
-              <path fill="#d3d3d3" d=${doorClosed}/>
-              <path d=${doorOpen}/>
-          </svg>${localize("editor.custom_icons.door")}
-        </mwc-list-item>
-
-        <mwc-list-item .value=${garageClosed + ":" + garageOpen}>
-          <svg viewBox="5 0 20 20" height="20" width="24">
-              <path fill="#d3d3d3" d=${garageClosed}/>
-              <path d=${garageOpen}/>
-          </svg>${localize("editor.custom_icons.garage")}
-        </mwc-list-item>
-
-
-        <mwc-list-item .value=${sidegateClosed + ":" + sidegateOpen}>
-          <svg viewBox="5 -15 50 50" height="20" width="24" >
-              <path fill="#d3d3d3" d=${sidegateClosed}/>
-              <path d=${sidegateClosed}/>
-          </svg>${localize("editor.custom_icons.gate")}
-        </mwc-list-item>
-      </icon-select-door>
     `;
   }
 
@@ -152,20 +119,21 @@ export class BoilerplateCardEditor extends LitElement implements LovelaceCardEdi
     fireEvent(this, "config-changed", { config });
   }
 
-  private _changed_icon(ev): void {
-    const value = ev.target.value;
-    var config;
-    if (value == "") {
-      config = this._config;
-      delete config?.icon;
-    }else {
-      config = { ...this._config, icon: value };
-    }
+  // private _changed_icon(ev): void {
+  //   const value = ev.target.value;
+  //   var config;
+  //   if (value == "") {
+  //     config = this._config;
+  //     delete config?.icon;
+  //   }
+  //   if (value !== ""){
+  //     config = { ...this._config, icon: value };
+  //   }
 
-    fireEvent(this, "config-changed", { config: config});
+  //   fireEvent(this, "config-changed", { config: config});
 
 
-  }
+  // }
 
   static get styles(): CSSResultGroup {
     return css`
@@ -193,14 +161,15 @@ export class BoilerplateCardEditor extends LitElement implements LovelaceCardEdi
         background: var(--secondary-background-color);
         display: grid;
       }
+
       ha-formfield {
         padding: 0px 10px 0px 20px;
         max-width: 211px;
       }
-      icon-select-door {
+      /* icon-select-door {
         width: 100%;
         height: 120%
-      }
+      } */
     `;
   }
 }

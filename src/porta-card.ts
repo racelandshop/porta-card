@@ -4,7 +4,7 @@ import { Ripple } from '@material/mwc-ripple';
 import { LitElement, html, TemplateResult, css, PropertyValues, CSSResultGroup} from 'lit';
 import { HassEntity } from 'home-assistant-js-websocket'
 import { queryAsync } from 'lit-element'
-import { customElement, property, state } from "lit/decorators";
+import { customElement, property, state, eventOptions } from "lit/decorators";
 import { findEntities } from "./././find-entities";
 import { ifDefined } from "lit/directives/if-defined";
 import { classMap } from "lit/directives/class-map";
@@ -12,8 +12,10 @@ import { HomeAssistant, hasConfigOrEntityChanged, hasAction, ActionHandlerEvent,
 import './editor';
 import type { BoilerplateCardConfig } from './types';
 import { actionHandler } from './action-handler-directive';
-import { CARD_VERSION, doorClosed, doorOpen, garageOpen, garageClosed, sidegateClosed, sidegateOpen } from './const';
+import { CARD_VERSION, doorClosed, doorOpen } from './const';
 import { localize } from './localize/localize';
+import { debounce } from "./common/debounce";
+import ResizeObserver from "./common/resizeObserver";
 
 
 console.info(
@@ -61,9 +63,66 @@ export class BoilerplateCard extends LitElement {
     };
   }
 
+  protected firstUpdated(): void {
+    this._attachResizeObserver();
+  }
+  private _resizeObserver?: ResizeObserver;
 
+  private async _attachResizeObserver(): Promise<void> {
+    if (!this._resizeObserver) {
+      this._resizeObserver = new ResizeObserver(
+        debounce(
+          (entries: any) => {
+          const rootGrid = this.closest("div");
+          const entry = entries[0];
+          if (
+            rootGrid &&
+            entry.contentRect.width <= rootGrid.clientWidth / 2 &&
+            entry.contentRect.width > rootGrid.clientWidth / 3
+          ) {
+            const shadow = this.shadowRoot?.querySelector("ha-card");
+            shadow?.classList.remove("big-card");
+            shadow?.classList.add("medium-card");
+            const statusicon = this.shadowRoot?.querySelector(".ha-status-icon");
+            statusicon?.classList.remove("ha-status-icon");
+            statusicon?.classList.add("ha-status-icon-small");
+            const statusrect = this.shadowRoot?.querySelector(".rect-card");
+            statusrect?.classList.remove("rect-card");
+            statusrect?.classList.add("rect-card-medium");
+            const door = this.shadowRoot?.querySelector(".svgicon-door");
+            door?.classList.remove("svgicon-door");
+            door?.classList.add("svgicon-door-small");
+          }
+          else if (
+            rootGrid &&
+            entry.contentRect.width <= rootGrid.clientWidth / 3 &&
+            entry.contentRect.width !== 0
+          ) {
+            const shadow = this.shadowRoot?.querySelector("ha-card");
+            shadow?.classList.remove("big-card");
+            shadow?.classList.add("small-card");
+            const statusicon = this.shadowRoot?.querySelector(".ha-status-icon");
+            statusicon?.classList.remove("ha-status-icon");
+            statusicon?.classList.add("ha-status-icon-small");
+            const statusrect = this.shadowRoot?.querySelector(".rect-card");
+            statusrect?.classList.remove("rect-card");
+            statusrect?.classList.add("rect-card-small");
+            const door = this.shadowRoot?.querySelector(".svgicon-door");
+            door?.classList.remove("svgicon-door");
+            door?.classList.add("svgicon-door-small");
+          }
+        }, 250, true));
+      }
+
+    this._resizeObserver.observe(this);
+
+    }
   @property({ attribute: false }) public hass!: HomeAssistant;
+
   @state() private config!: BoilerplateCardConfig;
+
+  @state() private _shouldRenderRipple = false;
+
   public setConfig(config: BoilerplateCardConfig): void {
     if (!config) {
       throw new Error(localize('common.invalidconfiguration'));
@@ -116,69 +175,71 @@ export class BoilerplateCard extends LitElement {
 
   return html`
     <ha-card
-      class="hassbut ${classMap({
+      class="big-card ${classMap({
         "state-on": ifDefined(
           stateObj ? this.computeActiveState(stateObj) : undefined) === "on",
         "state-off": ifDefined(
           stateObj ? this.computeActiveState(stateObj) : undefined) === "off",
         })}"
       @action=${this._handleAction}
-      @focus="${this.handleRippleFocus}"
+      @focus=${this.handleRippleFocus}
+      @blur=${this.handleRippleBlur}
+      @mousedown=${this.handleRippleActivate}
+      @mouseup=${this.handleRippleDeactivate}
+      @touchstart=${this.handleRippleActivate}
+      @touchend=${this.handleRippleDeactivate}
+      @touchcancel=${this.handleRippleDeactivate}
+      @keydown=${this._handleKeyDown}
       .actionHandler=${actionHandler({
       hasHold: hasAction(this.config.hold_action),
       hasDoubleClick: hasAction(this.config.double_tap_action),
       })}
       tabindex="0"
+      role="button"
+      aria-label=${this.config.name ||
+        (stateObj ? this.computeStateName(stateObj) : "")}
+        tabindex=${ifDefined(
+          hasAction(this.config.tap_action) ? "0" : undefined
+        )}
       .label=${`porta: ${this.config.entity || 'No Entity Defined'}`}
     >
       ${this.config.show_icon && this.config.icon
-          ? html`
-            <svg class=${classMap({
-              "svgicon-door":
-                this.config.icon == doorClosed + ":" + doorOpen,
-              "svgicon-garage":
-                this.config.icon == garageClosed + ":" + garageOpen,
-              "svgicon-sidegate":
-                this.config.icon == sidegateClosed + ":" + sidegateOpen,
-            })}
-              viewBox="0 0 50 50" height="100%" width="100%" >
-                <path fill="#a9b1bc" d=${this.config.icon.split(":")[0]} />
-                <path class=${classMap({
-                  "state-on-porta-icon":
-                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon == doorClosed + ":" + doorOpen),
-                  "state-off-porta-icon":
-                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == doorClosed + ":" + doorOpen),
-                  "state-on-garage-icon":
-                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon ==  garageClosed + ":" + garageOpen),
-                  "state-off-garage-icon":
-                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == garageClosed + ":" + garageOpen),
-                  "state-on-sidegate-icon":
-                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon == sidegateClosed + ":" + sidegateOpen),
-                  "state-off-sidegate-icon":
-                    ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon == sidegateClosed + ":" + sidegateOpen),
-                  "state-unavailable":
-                    ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
-                })}
-                d=${this.config.icon.split(":")[1]} />
+    ? html`
+          <div class="ha-status-icon">
+            <svg class=
+              "svgicon-door"
+              viewBox="0 0 50 50" height="100%" width="100%">
+
+                  <path fill="#000000" d=${this.config.icon.split(":")[0]} />
+                  <path class=${classMap({
+                    "state-on-porta-icon":
+                      ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "on" && (this.config.icon === doorClosed + ":" + doorOpen),
+                    "state-off-porta-icon":
+                      ifDefined(stateObj ? this.computeActiveState(stateObj) : undefined) === "off" && (this.config.icon === doorClosed + ":" + doorOpen),
+                    "state-unavailable":
+                      ifDefined(stateObj? this.computeActiveState(stateObj) : undefined) === "unavailable",
+                  })}
+                  d=${this.config.icon.split(":")[1]} />
               </svg>
-          <div class="divibut"></div>
+            </div>
           `
         : ""}
     ${this.config.show_name
       ? html`
-        <div tabindex = "-1" class="name-div">
+        <div tabindex = "-1" class="rect-card">
         ${this.config.name}
           </div>
           <div></div>
         `
       : ""}
 
-    ${this.config.show_state
+    <!-- ${this.config.show_state
     ? html`
       <div tabindex="-1" class="state-div">
       ${this.translate_state(stateObj)}
       <div class="position"></div>
-     </div><div></div>`: ""}
+     </div><div></div>`: ""} -->
+     ${this._shouldRenderRipple ? html`<mwc-ripple></mwc-ripple>` : ""}
       </ha-card>
     `;
   }
@@ -224,155 +285,169 @@ private computeActiveState = (stateObj: HassEntity): string => {
       ? this.computeObjectId(stateObj.entity_id).replace(/_/g, " ")
       : stateObj.attributes.friendly_name || "";
 
-  private _rippleHandlers: RippleHandlers = new RippleHandlers(() => {
-    return this._ripple;
-  });
+
 
   private handleRippleFocus() {
     this._rippleHandlers.startFocus();
   }
+  private _rippleHandlers: RippleHandlers = new RippleHandlers(() => {
+    this._shouldRenderRipple = true;
+    return this._ripple;
+  });
+
+  private _handleKeyDown(ev: KeyboardEvent) {
+    if (ev.key === "Enter" || ev.key === " ") {
+      handleAction(this, this.hass!, this.config!, "tap");
+    }
+  }
+
+  @eventOptions({ passive: true })
+  private handleRippleActivate(evt?: Event) {
+    this._rippleHandlers.startPress(evt);
+  }
+
+  private handleRippleDeactivate() {
+    this._rippleHandlers.endPress();
+  }
+
+  private handleRippleBlur() {
+    this._rippleHandlers.endFocus();
+  }
 
   static get styles(): CSSResultGroup {
     return css`
-      ha-card {
+      .big-card {
         cursor: pointer;
-        display: grid;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 4% 0;
+        font-size: 2.3rem;
+        height: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.5rem;
+        font-weight: 450;
+      }
+
+      .medium-card {
+        cursor: pointer;
+        display: flex;
         flex-direction: column;
         align-items: left;
         text-align: left;
-        padding: 10% 10% 10% 10%;
-        font-size: 18px;
-        width: 100%;
+        padding: 4% 0;
+        font-size: 1.8rem;
         height: 100%;
         box-sizing: border-box;
-        justify-content: left;
+        justify-content: center;
         position: relative;
-        background: var(--card-color-background, rgba(53,53,53,0.9));
-        color: var(--card-color-text, white);
-        border-radius: 25px;
         overflow: hidden;
+        border-radius: 1.5rem;
+        font-weight: 450;
       }
-      ha-icon {
-        width: 70%;
-        height: 80%;
-        padding-bottom: 15px;
-        margin: 0% 0% 0% 0%;
-        color: var(--paper-item-icon-color, #fdd835);
+      .small-card {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: left;
+        text-align: left;
+        padding: 4% 0;
+        font-size: 1.2rem;
+        height: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.5rem;
+        font-weight: 450;
+      }
+
+      ha-card:focus {
+        outline: none;
+      }
+
+      .ha-status-icon {
+        width: 40%;
+        height: auto;
+        color: var(--paper-item-icon-color, #44739e);
         --mdc-icon-size: 100%;
       }
-      ha-icon + span {
-        text-align: left;
+
+      .ha-status-icon-small {
+        width: 50%;
+        height: auto;
+        color: var(--paper-item-icon-color, #44739e);
+        --mdc-icon-size: 100%;
       }
-      span {
-        margin: 5% 50% 1% 0%;
-        padding: 0% 100% 1% 0%;
-      }
-      .divibut{
-        padding-bottom: 0%;
-        margin-bottom: 0%;
-      }
-      ha-icon,
+
+      ha-state-icon,
       span {
         outline: none;
       }
-      .state {
-        margin: 0% 50% 5% 0%;
-        padding: 0% 100% 5% 0%;
-        text-align: left;
+
+      .rect-card-small {
+        padding: 5%;
+        padding-bottom: 4%;
+        margin-bottom: 4%;
+        margin-left: 7%;
+        white-space: nowrap;
+        display: inline-block;
+        overflow: hidden;
+        max-width: 120px;
+        float: left;
+        text-overflow: ellipsis;
       }
-      .hassbut.state-off {
-        text-align: left;
+
+      .rect-card-medium {
+        padding: 5%;
+        padding-bottom: 4%;
+        margin-bottom: 4%;
+        margin-left: 7%;
+        white-space: nowrap;
+        display: inline-block;
+        overflow: hidden;
+        max-width: 170px;
+        float: left;
+        text-overflow: ellipsis;
       }
-      .hassbut.state-on {
-        text-align: left;
+
+      .rect-card {
+        padding: 5%;
+        white-space: nowrap;
+        display: inline-block;
+        overflow: hidden;
+        max-width: 300px;
+        float: left;
+        text-overflow: ellipsis;
       }
-      .hassbut {
-        display: grid;
-        grid-template-columns: 50% 50%;
-      }
-      .state-div {
-        padding: 0% 100% 10% 0%;
-        align-items: left;
-      }
-      .name-div {
-        padding: 0% 100% 1% 0%;
-        align-items: left;
-      }
+
       .svgicon-door {
-        padding-bottom: 20px;
-        max-width: 170px;
+        transform: scale(1.1);
       }
-      .svgicon-garage {
-        padding-bottom: 20px;
-        max-width: 170px;
-        transform: translate(62%, 55%) scale(2.5);
-      }
-      .svgicon-sidegate {
-        padding-left: 10px;
-        padding-bottom: 20px;
-        transform: scale(1.3);
-      }
-      .state {
-        animation: state 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+      .svgicon-door-small {
+        margin-bottom: 21%;
+        margin-left: 5%;
+        margin-top: 5%;
+        transform: scale(1.1);
       }
       .state-on-porta-icon {
         transform: skewY(10deg) translate(4.5%, -3.9%) scaleX(0.8);
         transition: all 0.5s ease-out;
-        fill: #b68349;
+        fill: var(--paper-item-icon-color, #44739e);
       }
       .state-off-porta-icon {
+        transition: all 0.5s ease-out;
         transition-timing-function: all 0.5s ease-out;
-        fill: #a2743f;
-      }
-      .state-on-garage-icon {
-        transform: scale(0);
-        fill: #ffffff;
-      }
-      .state-off-garage-icon {
-        fill: #a9b1bc;
-      }
-      .state-on-sidegate-icon {
-        fill: #a9b1bc;
-        transform: translate(15px);
-      }
-      .state-off-sidegate-icon {
-        fill: #a9b1bc;
-        transform: translate(0px);
-        transition-timing-function: all 2s ease-out;
+        fill: var(--paper-item-icon-color, #44739e);
       }
       .porta-icon.state-unavailable {
         color: var(--state-icon-unavailable-color, #bdbdbd);
       }
-      .garagem-icon.state-unavailable {
-        color: var(--state-icon-unavailable-color, #bdbdbd);
-      }
-      .sidegate-icon.state-unavailable {
-        color: var(--state-icon-unavailable-color, #bdbdbd);
-      }
-      .opacity {
-        animation: opacity 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-      }
-      .reverse {
-        animation-direction: reverse;
-      }
-      @keyframes state {
-        0% {
-          transform: none;
-          fill: #9da0a2;
-        }
-        100% {
-          transform: skewY(10deg) translate(4.5%, -3.9%) scaleX(0.8);
-          fill: #b68349;
-        }
-      }
-      @keyframes opacity {
-        0% {
-          opacity: 0;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
+
     `;
   }
 }
